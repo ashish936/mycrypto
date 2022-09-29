@@ -114,6 +114,15 @@ def my_portfolio():
         total_pl), bg="#DDDDDD", fg=font_color(float("{0:.2f}".format(total_pl))), font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     totalpl.grid(row=coin_row, column=6, sticky=N+S+E+W)
 
+    # Once all the loop is printed and the data is printed I will be clear the api so that
+    # when I click update new data is printed
+
+    api = ""
+
+    update = Button(pycrypto, text="Update", bg="#DDDDDD", fg="black", command=my_portfolio,
+                    font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
+    update.grid(row=coin_row+1, column=6, sticky=N+S+E+W)
+
 
 name = Label(pycrypto, text="Coin Name", bg="#30475E", fg="#DDDDDD",
              font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
