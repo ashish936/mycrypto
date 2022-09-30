@@ -1,10 +1,19 @@
 from tkinter import *
 import requests
 import json
+import sqlite3
 
 pycrypto = Tk()
 pycrypto.title("My crypto portfolio")
 pycrypto.iconbitmap('fav.ico')
+
+# adding database
+con = sqlite3.connect('coin.db')
+cursorObj = con.cursor()
+
+cursorObj.execute(
+    "CREATE TABLE IF NOT EXISTS coins(id INTEGER PRIMARY KEY, symbol TEXT, amount INTEGER, price REAL)")
+con.commit()
 
 
 def font_color(amount):
@@ -20,54 +29,32 @@ def my_portfolio():
 
     api = json.loads(api_request.content)
 
-    # Now I would be adding my own coin that I've invested
-    # coins = ["BTC", "ADA", "SOL"] Instead of list let's store it in a dictionary like json file
-    # coin name, amount no. of coins bought, price at which bought
-
-    print("<------------>")
-    print("<------------>")
-
-    coins = [
-        {
-            "symbol": "BTC",
-            "amount_owned": 2,
-            "price_per_coin": 19100.59
-        },
-        {
-            "symbol": "ADA",
-            "amount_owned": 15,
-            "price_per_coin": 0.99
-        },
-        {
-            "symbol": "SOL",
-            "amount_owned": 6,
-            "price_per_coin": 31.46
-        }
-    ]
+    # Taking data from the DB
+    cursorObj.execute("SELECT * FROM coins")
+    coins = cursorObj.fetchall()
 
     total_pl = 0
     coin_row = 1  # bc 0th row will always be heading
     total_current_value = 0
 
-    # whenever I am hitting the run button I am sending a request so these req are counted in database and the daashboard
     # I want info only of my portfolio
     for i in range(0, 10):  # remember 5 is not included
         for coin in coins:
             # if the current coin is equal to my coin in list
-            if api["data"][i]["symbol"] == coin["symbol"]:
-                total_paid = coin["amount_owned"] * coin["price_per_coin"]
-                current_value = coin["amount_owned"] * \
+            if api["data"][i]["symbol"] == coin[1]:
+                total_paid = coin[2] * coin[3]
+                current_value = coin[2] * \
                     api["data"][i]["quote"]["USD"]["price"]
                 pl_percoin = api["data"][i]["quote"]["USD"]["price"] - \
-                    coin["price_per_coin"]
-                total_pl_coin = pl_percoin * coin["amount_owned"]
+                    coin[3]
+                total_pl_coin = pl_percoin * coin[2]
 
                 total_pl = total_pl + total_pl_coin
                 total_current_value = total_current_value + current_value
 
                 # print(api["data"][i]["name"] + " - " + api["data"][i]["symbol"])
                 # print("Price - ${0:.2f}".format(api["data"][i]["quote"]["USD"]["price"]))
-                # print("Number of Coin: ", coin["amount_owned"])
+                # print("Number of Coin: ", coin[2])
                 # print("Total Amount Paid: ", "${0:.2f}".format(total_paid))
                 # print("Current Value: ", "${0:.2f}".format(current_value))
                 # print("P/L Per coin: ", "${0:.2f}".format(pl_percoin))
@@ -83,7 +70,7 @@ def my_portfolio():
                 price.grid(row=coin_row, column=1, sticky=N+S+E+W)
 
                 no_coins = Label(
-                    pycrypto, text=coin["amount_owned"], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
+                    pycrypto, text=coin[2], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 no_coins.grid(row=coin_row, column=2, sticky=N+S+E+W)
 
                 amount_paid = Label(pycrypto, text="${0:.2f}".format(
@@ -154,7 +141,9 @@ totalpl.grid(row=0, column=6, sticky=N+S+E+W)
 
 # Calling the api function to retrieve the coins
 my_portfolio()
-
 pycrypto.mainloop()
-
 print("Program completed")
+
+# closing database
+cursorObj.close()
+con.close()
