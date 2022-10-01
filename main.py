@@ -1,11 +1,12 @@
 from tkinter import *
+from tkinter import messagebox, Menu
 import requests
 import json
 import sqlite3
 
-pycrypto = Tk()
-pycrypto.title("My crypto portfolio")
-pycrypto.iconbitmap('fav.ico')
+mycrypto = Tk()
+mycrypto.title("My crypto portfolio")
+mycrypto.iconbitmap('fav.ico')
 
 # adding database
 con = sqlite3.connect('coin.db')
@@ -14,6 +15,35 @@ cursorObj = con.cursor()
 cursorObj.execute(
     "CREATE TABLE IF NOT EXISTS coins(id INTEGER PRIMARY KEY, symbol TEXT, amount INTEGER, price REAL)")
 con.commit()
+
+
+def reset():
+    for cell in mycrypto.winfo_children():
+        cell.destroy()
+
+    app_nav()
+    app_header()
+    my_portfolio()
+
+
+def app_nav():
+    def clear_all():
+        cursorObj.execute("DELETE FROM coins")
+        con.commit()
+
+        messagebox.showinfo("Portfolio Notification",
+                            "Portfolio Cleared - Add new coins")
+        reset()
+
+    def close_app():
+        mycrypto.destroy()
+
+    menu = Menu(mycrypto)
+    file_item = Menu(menu)
+    file_item.add_command(label='Clear Portfolio', command=clear_all)
+    file_item.add_command(label='Close App', command=close_app)
+    menu.add_cascade(label="File", menu=file_item)
+    mycrypto.config(menu=menu)
 
 
 def my_portfolio():
@@ -38,16 +68,28 @@ def my_portfolio():
                           (symbol_txt.get(), price_txt.get(), amount_txt.get()))
         con.commit()
 
+        messagebox.showinfo("Portfolio Notification",
+                            "Coin added to portfolio successfully!")
+        reset()
+
     def update_coin():
         cursorObj.execute("UPDATE coins SET symbol = ?, price = ? , amount = ? WHERE id = ? ", (
             symbol_update.get(), price_update.get(), amount_update.get(), portid_update.get()))
         con.commit()
+
+        messagebox.showinfo("Portfolio Notification",
+                            "Coin Updated successfully!")
+        reset()
 
     def delete_coin():
         # remember to add comma if there is a single element in the tuple unless it will be treated as a list
         cursorObj.execute("DELETE FROM coins WHERE id=?",
                           (portid_delete.get(), ))
         con.commit()
+        messagebox.showinfo("Portfolio Notification",
+                            "Coin Deleted successfully!")
+
+        reset()
 
     total_pl = 0
     coin_row = 1  # bc 0th row will always be heading
@@ -80,34 +122,34 @@ def my_portfolio():
                 # print("------------")
 
                 portfolio_id = Label(
-                    pycrypto, text=coin[0], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
+                    mycrypto, text=coin[0], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 portfolio_id.grid(row=coin_row, column=0, sticky=N+S+E+W)
 
                 name = Label(
-                    pycrypto, text=api["data"][i]["symbol"], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
+                    mycrypto, text=api["data"][i]["symbol"], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 name.grid(row=coin_row, column=1, sticky=N+S+E+W)
 
-                price = Label(pycrypto, text="${0:.2f}".format(
+                price = Label(mycrypto, text="${0:.2f}".format(
                     api["data"][i]["quote"]["USD"]["price"]), bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 price.grid(row=coin_row, column=2, sticky=N+S+E+W)
 
                 no_coins = Label(
-                    pycrypto, text=coin[2], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
+                    mycrypto, text=coin[2], bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 no_coins.grid(row=coin_row, column=3, sticky=N+S+E+W)
 
-                amount_paid = Label(pycrypto, text="${0:.2f}".format(
+                amount_paid = Label(mycrypto, text="${0:.2f}".format(
                     total_paid), bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 amount_paid.grid(row=coin_row, column=4,  sticky=N+S+E+W)
 
-                current_val = Label(pycrypto, text="${0:.2f}".format(current_value), bg="#DDDDDD", fg=font_color(float(
+                current_val = Label(mycrypto, text="${0:.2f}".format(current_value), bg="#DDDDDD", fg=font_color(float(
                     "{0:.2f}".format(current_value))), font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 current_val.grid(row=coin_row, column=5, sticky=N+S+E+W)
 
-                pl_coin = Label(pycrypto, text="${0:.2f}".format(
+                pl_coin = Label(mycrypto, text="${0:.2f}".format(
                     pl_percoin), bg="#DDDDDD", fg=font_color(float("{0:.2f}".format(pl_percoin))), font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 pl_coin.grid(row=coin_row, column=6, sticky=N+S+E+W)
 
-                totalpl = Label(pycrypto, text="${0:.2f}".format(
+                totalpl = Label(mycrypto, text="${0:.2f}".format(
                     total_pl_coin), bg="#DDDDDD", fg=font_color(float(
                         "{0:.2f}".format(total_pl_coin))), font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
                 totalpl.grid(row=coin_row, column=7, sticky=N+S+E+W)
@@ -115,54 +157,54 @@ def my_portfolio():
                 coin_row += 1
 
     # Insert data
-    symbol_txt = Entry(pycrypto, borderwidth=2, relief="groove")
+    symbol_txt = Entry(mycrypto, borderwidth=2, relief="groove")
     symbol_txt.grid(row=coin_row+1, column=1)
 
-    price_txt = Entry(pycrypto, borderwidth=2, relief="groove")
+    price_txt = Entry(mycrypto, borderwidth=2, relief="groove")
     price_txt.grid(row=coin_row+1, column=2)
 
-    amount_txt = Entry(pycrypto, borderwidth=2, relief="groove")
+    amount_txt = Entry(mycrypto, borderwidth=2, relief="groove")
     amount_txt.grid(row=coin_row+1, column=3)
 
-    add_coin = Button(pycrypto, text="Add Coin", bg="#DDDDDD", fg="black", command=insert_coin,
+    add_coin = Button(mycrypto, text="Add Coin", bg="#DDDDDD", fg="black", command=insert_coin,
                       font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     add_coin.grid(row=coin_row+1, column=4, sticky=N+S+E+W)
 
     # Update coin
-    portid_update = Entry(pycrypto, borderwidth=2, relief="groove")
+    portid_update = Entry(mycrypto, borderwidth=2, relief="groove")
     portid_update.grid(row=coin_row+2, column=0)
 
-    symbol_update = Entry(pycrypto, borderwidth=2, relief="groove")
+    symbol_update = Entry(mycrypto, borderwidth=2, relief="groove")
     symbol_update.grid(row=coin_row+2, column=1)
 
-    price_update = Entry(pycrypto, borderwidth=2, relief="groove")
+    price_update = Entry(mycrypto, borderwidth=2, relief="groove")
     price_update.grid(row=coin_row+2, column=2)
 
-    amount_update = Entry(pycrypto, borderwidth=2, relief="groove")
+    amount_update = Entry(mycrypto, borderwidth=2, relief="groove")
     amount_update.grid(row=coin_row+2, column=3)
 
-    update_coin_txt = Button(pycrypto, text="Update Coin", bg="#DDDDDD", fg="black", command=update_coin,
+    update_coin_txt = Button(mycrypto, text="Update Coin", bg="#DDDDDD", fg="black", command=update_coin,
                              font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     update_coin_txt.grid(row=coin_row+2, column=4, sticky=N+S+E+W)
 
     # Delete coin -> for deleting we only need the id
-    portid_delete = Entry(pycrypto, borderwidth=2, relief="groove")
+    portid_delete = Entry(mycrypto, borderwidth=2, relief="groove")
     portid_delete.grid(row=coin_row+3, column=0)
 
-    delete_coin_txt = Button(pycrypto, text="Delete Coin", bg="#DDDDDD", fg="black", command=delete_coin,
+    delete_coin_txt = Button(mycrypto, text="Delete Coin", bg="#DDDDDD", fg="black", command=delete_coin,
                              font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     delete_coin_txt.grid(row=coin_row+3, column=4, sticky=N+S+E+W)
 
     # print("Total P/L for Portfolio: ", "${0:.2f}".format(total_pl))
-    totalap = Label(pycrypto, text="${0:.2f}".format(
+    totalap = Label(mycrypto, text="${0:.2f}".format(
         total_amount_paid), bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     totalap.grid(row=coin_row, column=4, sticky=N+S+E+W)
 
-    totalcv = Label(pycrypto, text="${0:.2f}".format(
+    totalcv = Label(mycrypto, text="${0:.2f}".format(
         total_current_value), bg="#DDDDDD", fg="black", font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     totalcv.grid(row=coin_row, column=5, sticky=N+S+E+W)
 
-    totalpl = Label(pycrypto, text="${0:.2f}".format(
+    totalpl = Label(mycrypto, text="${0:.2f}".format(
         total_pl), bg="#DDDDDD", fg=font_color(float("{0:.2f}".format(total_pl))), font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     totalpl.grid(row=coin_row, column=7, sticky=N+S+E+W)
 
@@ -171,49 +213,50 @@ def my_portfolio():
 
     api = ""
 
-    refresh = Button(pycrypto, text="Refresh", bg="#DDDDDD", fg="black", command=my_portfolio,
+    refresh = Button(mycrypto, text="Refresh", bg="#DDDDDD", fg="black", command=reset,
                      font="Segoe 12", padx="5", pady="5", borderwidth=2, relief="groove")
     refresh.grid(row=coin_row+1, column=7, sticky=N+S+E+W)
 
 
 def app_header():
-    portfolio_id = Label(pycrypto, text="Portfolio ID", bg="#30475E", fg="#DDDDDD",
+    portfolio_id = Label(mycrypto, text="Portfolio ID", bg="#30475E", fg="#DDDDDD",
                          font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     portfolio_id.grid(row=0, column=0, sticky=N+S+E+W)
 
-    name = Label(pycrypto, text="Coin Name", bg="#30475E", fg="#DDDDDD",
+    name = Label(mycrypto, text="Coin Name", bg="#30475E", fg="#DDDDDD",
                  font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     name.grid(row=0, column=1, sticky=N+S+E+W)
 
-    price = Label(pycrypto, text="Price", bg="#30475E", fg="#DDDDDD",
+    price = Label(mycrypto, text="Price", bg="#30475E", fg="#DDDDDD",
                   font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     price.grid(row=0, column=2, sticky=N+S+E+W)
 
-    no_coin = Label(pycrypto, text="Coin Owned", bg="#30475E", fg="#DDDDDD",
+    no_coin = Label(mycrypto, text="Coin Owned", bg="#30475E", fg="#DDDDDD",
                     font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     no_coin.grid(row=0, column=3, sticky=N+S+E+W)
 
-    amount_paid = Label(pycrypto, text="Total amount paid", bg="#30475E", fg="#DDDDDD",
+    amount_paid = Label(mycrypto, text="Total amount paid", bg="#30475E", fg="#DDDDDD",
                         font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     amount_paid.grid(row=0, column=4, sticky=N+S+E+W)
 
-    current_val = Label(pycrypto, text="Current Value", bg="#30475E", fg="#DDDDDD",
+    current_val = Label(mycrypto, text="Current Value", bg="#30475E", fg="#DDDDDD",
                         font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     current_val.grid(row=0, column=5, sticky=N+S+E+W)
 
-    pl_coin = Label(pycrypto, text="P/L Per coin", bg="#30475E", fg="#DDDDDD",
+    pl_coin = Label(mycrypto, text="P/L Per coin", bg="#30475E", fg="#DDDDDD",
                     font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     pl_coin.grid(row=0, column=6, sticky=N+S+E+W)
 
-    totalpl = Label(pycrypto, text="Total P/L", bg="#30475E", fg="#DDDDDD",
+    totalpl = Label(mycrypto, text="Total P/L", bg="#30475E", fg="#DDDDDD",
                     font="Segoe 12 bold", padx="5", pady="5", borderwidth=2, relief="groove")
     totalpl.grid(row=0, column=7, sticky=N+S+E+W)
 
 
 # Calling the api function to retrieve the coins
+app_nav()
 app_header()
 my_portfolio()
-pycrypto.mainloop()
+mycrypto.mainloop()
 print("Program completed")
 
 # closing database
